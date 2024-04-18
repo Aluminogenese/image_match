@@ -5,11 +5,12 @@
 #pragma once
 
 #include <string>
-#include <fstream>
 #include "feature_extraction.h"
 #include "correlation_matcher.h"
 #include "lsq_matcher.h"
 #include "match_point_pair.h"
+#include "SaveFeatureDlg.h"
+
 // CImageMatchDlg 对话框
 class CImageMatchDlg : public CDialogEx
 {
@@ -37,34 +38,31 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	CString image_1_path;
+	// 左影像文件路径
+	CString left_image_path;
 	// 右影像文件路径
-	CString image_2_path;
-	CString image_1_corner_path;
-	CString image_2_corner_path;
+	CString right_image_path;
+
+	int feature_extraction_method;
+
+	int moravec_window_size;
+	int moravec_restrain_winSize;
+	float moravec_threshold;
+	float harris_threshold;
 	int corr_window_size;
 	float corr_threshold;
-//	CString result_corr_path;
+
 	int lsq_window_size;
 	float lsq_threshold;
-	CString result_lsq_path;
 	// 在两张影像上分别提取角点
-	cv::Mat img_1, img_2;
-	std::vector<cv::Point> corners_1, corners_2;
-	std::vector<MatchPointPair> corrMatches;
+	cv::Mat left_image, right_image;
+	std::vector<MatchPointPair>corr_match_points;
 
-//	afx_msg void OnClickedButtonFilePath();
+	CString progress_bar;
+
 	afx_msg void OnClickedButtonLeftImage();
 	afx_msg void OnClickedButtonRightImage();
-	afx_msg void OnClickedButtonLeftDetected();
-	afx_msg void OnClickedButtonRightDetected();
-	afx_msg void OnClickedButtonCoorResult();
 	afx_msg void OnClickedButtonCoor();
-	afx_msg void OnClickedButtonFeatureExtraction();
-	afx_msg void OnClickedButtonLsqResult();
 	afx_msg void OnClickedButtonLsq();
-//	CString img_match_path;
-	afx_msg void OnClickedButtonCoorResult2();
-	CString image_match_path;
-	CString result_corr_path;
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };

@@ -52,17 +52,18 @@ END_MESSAGE_MAP()
 
 CImageMatchDlg::CImageMatchDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_IMAGEMATCH_DIALOG, pParent)
-	, image_1_path(_T(""))
-	, image_2_path(_T(""))
-	, image_1_corner_path(_T(""))
-	, image_2_corner_path(_T(""))
-	, corr_window_size(0)
-	, corr_threshold(0)
-	, result_corr_path(_T(""))
+	, left_image_path(_T(""))
+	, right_image_path(_T(""))
+	, moravec_window_size(0)
+	, moravec_threshold(0)
 	, lsq_window_size(0)
 	, lsq_threshold(0)
-	, result_lsq_path(_T(""))
-	, image_match_path(_T(""))
+	, moravec_restrain_winSize(0)
+	, progress_bar(_T(""))
+	, feature_extraction_method(0)
+	, harris_threshold(0)
+	, corr_window_size(0)
+	, corr_threshold(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -70,36 +71,29 @@ CImageMatchDlg::CImageMatchDlg(CWnd* pParent /*=nullptr*/)
 void CImageMatchDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Text(pDX, IDC_EDIT1, image_1_path);
-	DDX_Text(pDX, IDC_EDIT4, image_2_path);
-	DDX_Text(pDX, IDC_EDIT2, image_1_corner_path);
-	DDX_Text(pDX, IDC_EDIT3, image_2_corner_path);
-	DDX_Text(pDX, IDC_EDIT5, corr_window_size);
-	DDX_Text(pDX, IDC_EDIT6, corr_threshold);
-	//  DDX_Text(pDX, IDC_EDIT7, result_corr_path);
+	DDX_Text(pDX, IDC_EDIT1, left_image_path);
+	DDX_Text(pDX, IDC_EDIT4, right_image_path);
+	DDX_Text(pDX, IDC_EDIT5, moravec_window_size);
+	DDX_Text(pDX, IDC_EDIT6, moravec_threshold);
 	DDX_Text(pDX, IDC_EDIT8, lsq_window_size);
 	DDX_Text(pDX, IDC_EDIT9, lsq_threshold);
-	DDX_Text(pDX, IDC_EDIT10, result_lsq_path);
-	//  DDX_Text(pDX, IDC_EDIT11, img_match_path);
-	DDX_Text(pDX, IDC_EDIT7, image_match_path);
-	DDX_Text(pDX, IDC_EDIT11, result_corr_path);
+	DDX_Text(pDX, IDC_EDIT14, moravec_restrain_winSize);
+	DDX_Text(pDX, IDC_EDIT2, progress_bar);
+	DDX_Radio(pDX, IDC_RADIO1, feature_extraction_method);
+	DDX_Text(pDX, IDC_EDIT3, harris_threshold);
+	DDX_Text(pDX, IDC_EDIT15, corr_window_size);
+	DDX_Text(pDX, IDC_EDIT16, corr_threshold);
 }
 
 BEGIN_MESSAGE_MAP(CImageMatchDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-//	ON_BN_CLICKED(IDC_BUTTON_FILE_PATH, &CImageMatchDlg::OnClickedButtonFilePath)
 ON_BN_CLICKED(IDC_BUTTON_LEFT_IMAGE, &CImageMatchDlg::OnClickedButtonLeftImage)
 ON_BN_CLICKED(IDC_BUTTON_RIGHT_IMAGE, &CImageMatchDlg::OnClickedButtonRightImage)
-ON_BN_CLICKED(IDC_BUTTON_LEFT_DETECTED, &CImageMatchDlg::OnClickedButtonLeftDetected)
-ON_BN_CLICKED(IDC_BUTTON_RIGHT_DETECTED, &CImageMatchDlg::OnClickedButtonRightDetected)
-ON_BN_CLICKED(IDC_BUTTON_COOR_RESULT, &CImageMatchDlg::OnClickedButtonCoorResult)
 ON_BN_CLICKED(IDC_BUTTON_COOR, &CImageMatchDlg::OnClickedButtonCoor)
-ON_BN_CLICKED(IDC_BUTTON_FEATURE_EXTRACTION, &CImageMatchDlg::OnClickedButtonFeatureExtraction)
-ON_BN_CLICKED(IDC_BUTTON_LSQ_RESULT, &CImageMatchDlg::OnClickedButtonLsqResult)
 ON_BN_CLICKED(IDC_BUTTON_LSQ, &CImageMatchDlg::OnClickedButtonLsq)
-ON_BN_CLICKED(IDC_BUTTON_COOR_RESULT2, &CImageMatchDlg::OnClickedButtonCoorResult2)
+ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -135,7 +129,9 @@ BOOL CImageMatchDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	feature_extraction_method = 0;
 
+	SetTimer(1002, 30, NULL);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -188,26 +184,6 @@ HCURSOR CImageMatchDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-
-
-//void CImageMatchDlg::OnClickedButtonFilePath()
-//{
-	// TODO: 在此添加控件通知处理程序代码
-			//文件类型说明字符串
-//	static char BASED_CODE file[] = "所有格式(*.*)|*.*";
-	//文件对话框初始化
-//	CFileDialog SelectFile(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, file, NULL);
-	//弹出文件打开对话框
-//	SelectFile.DoModal();
-	//得到所选文件路径
-//	CString FileName;
-//	FileName = SelectFile.GetPathName();
-	//将得到的文件路径名赋给对话框成员变量m_sRawIn
-//	image_1_path = FileName;
-//	UpdateData(FALSE);
-//}
-
-
 void CImageMatchDlg::OnClickedButtonLeftImage()
 {
 	// TODO: 在此添加控件通知处理程序代码
@@ -221,7 +197,7 @@ void CImageMatchDlg::OnClickedButtonLeftImage()
 	CString FileName;
 	FileName = SelectFile.GetPathName();
 	//将得到的文件路径名赋给对话框成员变量m_sRawIn
-	image_1_path = FileName;
+	left_image_path = FileName;
 	UpdateData(FALSE);
 
 }
@@ -240,209 +216,158 @@ void CImageMatchDlg::OnClickedButtonRightImage()
 	CString FileName;
 	FileName = SelectFile.GetPathName();
 	//将得到的文件路径名赋给对话框成员变量m_sRawIn
-	image_2_path = FileName;
+	right_image_path = FileName;
 	UpdateData(FALSE);
 }
 
-
-void CImageMatchDlg::OnClickedButtonLeftDetected()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	//文件类型说明字符串
-	static char BASED_CODE file[] = "所有格式(*.*)|*.*";
-	//文件对话框初始化
-	CFileDialog SelectFile(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, file, NULL);
-	//弹出文件打开对话框
-	SelectFile.DoModal();
-	//得到所选文件路径
-	CString FileName;
-	FileName = SelectFile.GetPathName();
-	//将得到的文件路径名赋给对话框成员变量m_sRawIn
-	image_1_corner_path = FileName;
-	UpdateData(FALSE);
-}
-
-
-void CImageMatchDlg::OnClickedButtonRightDetected()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	//文件类型说明字符串
-	static char BASED_CODE file[] = "所有格式(*.*)|*.*";
-	//文件对话框初始化
-	CFileDialog SelectFile(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, file, NULL);
-	//弹出文件打开对话框
-	SelectFile.DoModal();
-	//得到所选文件路径
-	CString FileName;
-	FileName = SelectFile.GetPathName();
-	//将得到的文件路径名赋给对话框成员变量m_sRawIn
-	image_2_corner_path = FileName;
-	UpdateData(FALSE);
-
-}
-
-
-void CImageMatchDlg::OnClickedButtonCoorResult()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	//文件类型说明字符串
-	static char BASED_CODE file[] = "所有格式(*.*)|*.*";
-	//文件对话框初始化
-	CFileDialog SelectFile(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, file, NULL);
-	//弹出文件打开对话框
-	SelectFile.DoModal();
-	//得到所选文件路径
-	CString FileName;
-	FileName = SelectFile.GetPathName();
-	//将得到的文件路径名赋给对话框成员变量m_sRawIn
-	image_match_path = FileName;
-	UpdateData(FALSE);
-
-}
-void CImageMatchDlg::OnClickedButtonCoorResult2()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	//文件类型说明字符串
-	static char BASED_CODE file[] = "所有格式(*.*)|*.*";
-	//文件对话框初始化
-	CFileDialog SelectFile(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, file, NULL);
-	//弹出文件打开对话框
-	SelectFile.DoModal();
-	//得到所选文件路径
-	CString FileName;
-	FileName = SelectFile.GetPathName();
-	//将得到的文件路径名赋给对话框成员变量m_sRawIn
-	result_corr_path = FileName;
-	UpdateData(FALSE);
-
-}
-
-
-void CImageMatchDlg::OnClickedButtonFeatureExtraction()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	img_1 = cv::imread(image_1_path.GetBuffer(0), cv::IMREAD_COLOR);
-	img_2 = cv::imread(image_2_path.GetBuffer(0), cv::IMREAD_COLOR);
-	if (img_1.data == nullptr || img_2.data == nullptr)
-	{
-		std::cout << "图像打开失败！" << std::endl;
-	}
-
-	int corner_threshold = 700; // Moravec角点检测阈值
-
-	 //featurextraction::HarrisCornerDetect(img_1,corners_1,120);
-	 //featurextraction::HarrisCornerDetect(img_2, corners_2,120);
-	double t = (double)cv::getTickCount();
-	featurextraction::MoravecCornerDetect(img_1, corners_1);
-	featurextraction::MoravecCornerDetect(img_2, corners_2);
-
-	t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
-	std::cout << " Sequential implementation: " << t << "s" << std::endl;
-
-	// corners_1 = photogrammetry::SIFTCornerDetect(img_1);
-	// corners_2 = photogrammetry::SIFTCornerDetect(img_2);"
-	MessageBox("特征提取完成,");
-		// 显示角点
-	cv::Mat img_1_corner, img_2_corner;
-	featurextraction::DrawCorners(img_1, img_1_corner, corners_1);
-	featurextraction::DrawCorners(img_2, img_2_corner, corners_2);
-	cv::imwrite(image_1_corner_path.GetBuffer(0), img_1_corner);
-	cv::imwrite(image_2_corner_path.GetBuffer(0), img_2_corner);
-	cv::imshow("img_1 角点检测后图像", img_1_corner);
-	cv::imshow("img_2 角点检测后图像", img_2_corner);
-	cv::waitKey(0);
-
-}
 
 void CImageMatchDlg::OnClickedButtonCoor()
 {
 	// TODO: 在此添加控件通知处理程序代码
-		// 进行相关系数匹配
-	std::cout << "开始相关系数匹配：" << std::endl;
-	CorrelationMatcher corrMatcher;
-	corrMatcher.setWindowSize(corr_window_size);
-	corrMatcher.setThreshold(corr_threshold);
-
-
-	corrMatcher.match(img_1, img_2, corners_1, corrMatches);
-	// corrMatcher.matchImproved(img_1, img_2, corners_1, corners_2, corrMatches);
-
-	std::cout << "相关系数匹配窗口大小：" << corr_window_size << "\t阈值：" << corr_threshold << std::endl;
-	std::cout << "相关系数匹配用时：" << time << "秒" << std::endl;
-	std::cout << "相关系数匹配到同名点：" << corrMatches.size() << std::endl;
-	std::cout << std::endl;
-
-	std::ofstream ofs;
-	ofs.open(result_corr_path);
-	for (auto& match : corrMatches)
+	left_image = cv::imread(left_image_path.GetBuffer(0), cv::IMREAD_COLOR);
+	right_image = cv::imread(right_image_path.GetBuffer(0), cv::IMREAD_COLOR);
+	if (left_image.data == nullptr || right_image.data == nullptr)
 	{
-		ofs << "srcX: " << match.srcPt.x
-			<< "\tsrcY: " << match.srcPt.y
-			<< "\tdstX: " << match.dstPt.x
-			<< "\tdstY: " << match.dstPt.y
-			<< "\tidx: " << match.dist << std::endl;
+		AfxMessageBox("图像打开失败！");
 	}
-	ofs.close();
 
-	// 显示匹配结果
-	cv::Mat img_match;
-	corrMatcher.drawMatches(img_1, img_2, img_match, corrMatches);
-	cv::imwrite(image_match_path.GetBuffer(0), img_match);
-	cv::imshow("匹配结果：", img_match);
-	cv::waitKey(0);
-
-}
-
-void CImageMatchDlg::OnClickedButtonLsqResult()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	//文件类型说明字符串
-	static char BASED_CODE file[] = "所有格式(*.*)|*.*";
-	//文件对话框初始化
-	CFileDialog SelectFile(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, file, NULL);
-	//弹出文件打开对话框
-	SelectFile.DoModal();
-	//得到所选文件路径
-	CString FileName;
-	FileName = SelectFile.GetPathName();
-	//将得到的文件路径名赋给对话框成员变量m_sRawIn
-	result_lsq_path = FileName;
+	progress_bar = "开始进行特征提取...";
 	UpdateData(FALSE);
 
+	std::vector<cv::Point> corners;
+	double t = (double)cv::getTickCount();
+	if (feature_extraction_method == 0) {
+		if (harris_threshold != 0) {
+			featurextraction::HarrisCornerDetect(left_image, corners, harris_threshold);
+		}
+		else {
+			featurextraction::HarrisCornerDetect(left_image, corners);
+		}
+		featurextraction::MoravecCornerDetect(left_image, corners);
+	}
+	else if (feature_extraction_method == 1) {
+		if (moravec_window_size != 0 && moravec_restrain_winSize != 0 && moravec_threshold != 0) {
+			if (moravec_window_size % 2 == 0) {
+				moravec_window_size += 1;
+			}
+			if (moravec_restrain_winSize % 2 == 0) {
+				moravec_restrain_winSize += 1;
+			}
+			featurextraction::MoravecCornerDetect(left_image, corners, moravec_window_size, moravec_restrain_winSize, moravec_threshold);
+		}
+		else {
+			featurextraction::MoravecCornerDetect(left_image, corners);
+		}
+	}
+	else if (feature_extraction_method == 2) {
+		featurextraction::SIFTCornerDetect(left_image, corners);
+	}
+	t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
+	progress_bar.Format("特征提取完成！用时:%lf，开始进行相关系数匹配...", t);
+	UpdateData(FALSE);
+
+	t = (double)cv::getTickCount();
+	if (corr_window_size != 0 && corr_threshold != 0) {
+		if (corr_window_size % 2 == 0) {
+			corr_window_size += 1;
+		}
+		correlationmatch::match(corr_match_points, left_image, right_image, corners, moravec_window_size, moravec_threshold);
+	}
+	else
+	{
+		correlationmatch::match(corr_match_points, left_image, right_image, corners);
+	}
+	t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
+	progress_bar.Format("相关系数匹配完成！用时:%lf", t);
+	UpdateData(FALSE);
+
+	SaveFeatureDlg dlg;
+	CString jpg_file_name, txt_file_name;
+	if (IDOK == dlg.DoModal())
+	{
+		jpg_file_name = dlg.m_jpgFileName;
+		txt_file_name = dlg.m_txtFileName;
+		cv::Mat corr_match_resultImg;
+		basematcher::draw_result_view(corr_match_resultImg, left_image, right_image, corr_match_points);
+		cv::imwrite(jpg_file_name.GetBuffer(0), corr_match_resultImg);
+		basematcher::save_match_points(txt_file_name.GetBuffer(0), corr_match_points);
+	}
 }
 
 
 void CImageMatchDlg::OnClickedButtonLsq()
 {
 	// TODO: 在此添加控件通知处理程序代码
-		// 在相关系数匹配的基础上进行最小二乘匹配
-	LsqMatcher lsqMatcher;
-	lsqMatcher.setWindowSize(lsq_window_size);
-	lsqMatcher.setThreshold(lsq_threshold);
-	std::vector<MatchPointPair> lsqMatches;
-
-	for (auto match : corrMatches)
+	std::vector<MatchPointPair>lsq_match_points;
+	double t = (double)cv::getTickCount();
+	if (lsq_window_size != 0 && lsq_threshold != 0) {
+		if (lsq_window_size % 2 == 0) {
+			lsq_window_size += 1;
+		}
+		lsqmatch::match(lsq_match_points, corr_match_points, left_image, right_image, lsq_window_size, lsq_threshold);
+	}
+	else
 	{
-		if (lsqMatcher.subPixelMatch(img_1, img_2, match))
-			lsqMatches.push_back(match);
+		lsqmatch::match(lsq_match_points, corr_match_points, left_image, right_image);
+	}
+	t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
+	progress_bar.Format("最小二乘匹配完成！用时:%lf", t);
+	UpdateData(FALSE);
+
+	SaveFeatureDlg dlg;
+	CString jpg_file_name, txt_file_name;
+	if (IDOK == dlg.DoModal())
+	{
+		jpg_file_name = dlg.m_jpgFileName;
+		txt_file_name = dlg.m_txtFileName;
+		cv::Mat lsq_match_resultImg;
+		basematcher::draw_result_view(lsq_match_resultImg, left_image, right_image, lsq_match_points);
+		cv::imwrite(jpg_file_name.GetBuffer(0), lsq_match_resultImg);
+		basematcher::save_match_points(txt_file_name.GetBuffer(0), lsq_match_points);
 	}
 
-	std::cout << "最小二乘匹配窗口大小：" << lsq_window_size << "\t阈值：" << lsq_threshold << std::endl;
-	std::cout << "最小二乘匹配用时：" << time << "秒" << std::endl;
-	std::cout << "最小二乘匹配到同名点：" << lsqMatches.size() << std::endl;
-	std::cout << std::endl;
-
-	std::ofstream ofs;
-	ofs.open(result_lsq_path);
-	for (auto match : lsqMatches)
-	{
-		ofs << "srcX: " << match.srcPt.x
-			<< "\tsrcY: " << match.srcPt.y
-			<< "\tdstX: " << match.dstPt.x
-			<< "\tdstY: " << match.dstPt.y
-			<< "\tidx: " << match.dist << std::endl;
-	}
-	ofs.close();
 }
 
 
+
+
+void CImageMatchDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	if (nIDEvent == 1002) {
+		if (feature_extraction_method == 0) {
+			GetDlgItem(IDC_STATIC4)->ShowWindow(SW_SHOW);
+			GetDlgItem(IDC_EDIT3)->ShowWindow(SW_SHOW);
+
+			GetDlgItem(IDC_STATIC1)->ShowWindow(SW_HIDE);
+			GetDlgItem(IDC_STATIC2)->ShowWindow(SW_HIDE);
+			GetDlgItem(IDC_STATIC3)->ShowWindow(SW_HIDE);
+			GetDlgItem(IDC_EDIT5)->ShowWindow(SW_HIDE);
+			GetDlgItem(IDC_EDIT6)->ShowWindow(SW_HIDE);
+			GetDlgItem(IDC_EDIT14)->ShowWindow(SW_HIDE);
+		}
+		else if (feature_extraction_method == 1) {
+			GetDlgItem(IDC_STATIC4)->ShowWindow(SW_HIDE);
+			GetDlgItem(IDC_EDIT3)->ShowWindow(SW_HIDE);
+
+			GetDlgItem(IDC_STATIC1)->ShowWindow(SW_SHOW);
+			GetDlgItem(IDC_STATIC2)->ShowWindow(SW_SHOW);
+			GetDlgItem(IDC_STATIC3)->ShowWindow(SW_SHOW);
+			GetDlgItem(IDC_EDIT5)->ShowWindow(SW_SHOW);
+			GetDlgItem(IDC_EDIT6)->ShowWindow(SW_SHOW);
+			GetDlgItem(IDC_EDIT14)->ShowWindow(SW_SHOW);
+		}
+		else if (feature_extraction_method == 2) {
+			GetDlgItem(IDC_STATIC4)->ShowWindow(SW_HIDE);
+			GetDlgItem(IDC_EDIT3)->ShowWindow(SW_HIDE);
+
+			GetDlgItem(IDC_STATIC1)->ShowWindow(SW_HIDE);
+			GetDlgItem(IDC_STATIC2)->ShowWindow(SW_HIDE);
+			GetDlgItem(IDC_STATIC3)->ShowWindow(SW_HIDE);
+			GetDlgItem(IDC_EDIT5)->ShowWindow(SW_HIDE);
+			GetDlgItem(IDC_EDIT6)->ShowWindow(SW_HIDE);
+			GetDlgItem(IDC_EDIT14)->ShowWindow(SW_HIDE);
+		}
+	}
+	CDialogEx::OnTimer(nIDEvent);
+}

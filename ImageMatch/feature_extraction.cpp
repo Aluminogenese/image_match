@@ -7,7 +7,7 @@ void featurextraction::HarrisCornerDetect(const cv::Mat& image, std::vector<cv::
     if (image_grey.channels() != 1) {
         cv::cvtColor(image_grey, image_grey, cv::COLOR_BGR2GRAY);
     }
-    
+
     cv::Mat interest_img, interest_img_norm, interest_img_norm_uint8;
     interest_img = cv::Mat::zeros(image_grey.size(), CV_32FC1);
 
@@ -26,10 +26,11 @@ void featurextraction::HarrisCornerDetect(const cv::Mat& image, std::vector<cv::
     // 筛选响应值大于阈值的点作为角点
 #pragma omp parallel for
     for (int i = 0; i < interest_img_norm.rows; i++) {
+        const float* interest_img_normPtr = interest_img_norm.ptr<float>(i);
         for (int j = 0; j < interest_img_norm.cols; j++) {
 #pragma omp critical
-            if ((int)*interest_img_norm.ptr<float>(i, j) > threshold) {
-                corners.push_back(cv::Point(j, i)); // i->y, j->x
+            if (static_cast<int>(interest_img_normPtr[j]) > threshold) {
+                corners.push_back(cv::Point(j, i));//x:col,y:row
             }
         }
     }
@@ -47,17 +48,21 @@ void featurextraction::MoravecCornerDetect(const cv::Mat& image, std::vector<cv:
     /// 计算兴趣值
 #pragma omp parallel for
     for (int i = insterest_step; i < image_grey.rows - insterest_step; i++) {
-        for (int j = insterest_step; j < image_grey.cols - insterest_step; j++)
-        {
+        float* interest_img_ptr = interest_img.ptr<float>(i);
+        for (int j = insterest_step; j < image_grey.cols - insterest_step; j++) {
             cv::v_int32x4 value = cv::v_setzero_s32();
-            for (int k = -insterest_step; k < insterest_step; k++)
-            {
-                cv::v_int32x4 lvalue(*image_grey.ptr<uchar>(i + k, j), *image_grey.ptr<uchar>(i, j + k), *image_grey.ptr<uchar>(i + k, j + k), *image_grey.ptr<uchar>(i + k, j - k));
-                cv::v_int32x4 rvalue(*image_grey.ptr<uchar>(i + k + 1, j), *image_grey.ptr<uchar>(i, j + k + 1), *image_grey.ptr<uchar>(i + k + 1, j + k + 1), *image_grey.ptr<uchar>(i + k + 1, j - k - 1));
+            for (int k = -insterest_step; k < insterest_step; k++) {
+                uchar* ptr1 = image_grey.ptr<uchar>(i + k);
+                uchar* ptr2 = image_grey.ptr<uchar>(i + k + 1);
+                uchar* ptr3 = image_grey.ptr<uchar>(i);
+                uchar* ptr4 = image_grey.ptr<uchar>(i - k);
+
+                cv::v_int32x4 lvalue(ptr1[j], ptr3[j + k], ptr1[j + k], ptr4[j - k]);
+                cv::v_int32x4 rvalue(ptr2[j], ptr3[j + k + 1], ptr2[j + k + 1], ptr4[j - k - 1]);
                 cv::v_int32x4 v_1 = (lvalue - rvalue) * (lvalue - rvalue);
                 value += v_1;
             }
-            *interest_img.ptr<float>(i, j) = static_cast<float>(cv::v_reduce_min(value));
+            interest_img_ptr[j] = static_cast<float>(cv::v_reduce_min(value));
         }
     }
     /// 选取候选点
@@ -74,13 +79,14 @@ void featurextraction::MoravecCornerDetect(const cv::Mat& image, std::vector<cv:
             maxValue = 0;
             for (int m = -restrain_step; m < restrain_step; m++)
             {
+                const float* interest_img_ptr = interest_img.ptr<float>(i + m);
                 for (int n = -restrain_step; n < restrain_step; n++)
                 {
-                    if (*interest_img.ptr<float>(i + m, j + n) > maxValue)
+                    if (interest_img_ptr[j + n] > maxValue)
                     {
-                        maxValue = *interest_img.ptr<float>(i + m, j + n);
-                        point.y = i + m;
-                        point.x = j + n;
+                        maxValue = interest_img_ptr[j + n];
+                        point.x = j + m;
+                        point.y = i + n;//x:col,y:row
                     }
                 }
             }
@@ -91,7 +97,6 @@ void featurextraction::MoravecCornerDetect(const cv::Mat& image, std::vector<cv:
             }
         }
     }
-
 }
 void featurextraction::SIFTCornerDetect(const cv::Mat& srcImg, std::vector<cv::Point>& corners)
 {

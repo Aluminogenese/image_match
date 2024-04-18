@@ -1,83 +1,75 @@
 #include "pch.h"
 #include "base_matcher.h"
 
-void BaseMatcher::setWindowSize(int windowSize)
-{
-	this->windowSize = windowSize;
+void basematcher::save_match_points(const std::string& saveFilename, const std::vector<MatchPointPair>& matchPoints) {
+	std::ofstream ofs;
+	ofs.open(saveFilename);
+	ofs << "left_x(col) " << "left_y(row)\t" << "right_x(col) " << "right_y(row)\t" << "coefficient" << std::endl;
+	for (auto& match_point : matchPoints)
+	{
+		ofs << match_point.leftPt.x << "\t"
+			<< match_point.leftPt.y << "\t\t"
+			<< match_point.rightPt.x << "\t"
+			<< match_point.rightPt.y << "\t\t"
+			<< match_point.dist << std::endl;
+	}
+	ofs.close();
 }
 
-void BaseMatcher::setThreshold(double threshold)
-{
-	this->threshold = threshold;
-}
-
-void BaseMatcher::drawMatches(const cv::Mat& srcImg, const cv::Mat& dstImg, cv::Mat& outputImg, std::vector<MatchPointPair>& matches)
-{
-    outputImg.create(cv::Size(srcImg.cols + dstImg.cols, std::max(srcImg.rows, dstImg.rows)), CV_8UC3);
-
-    srcImg.copyTo(outputImg(cv::Rect(0, 0, srcImg.cols, srcImg.rows)));
-    dstImg.copyTo(outputImg(cv::Rect(srcImg.cols, 0, dstImg.cols, dstImg.rows)));
-
-    cv::Point pt1, pt2;
-    static std::default_random_engine e;
-    static std::uniform_int_distribution<int> u(0, 255);
-
-    for (MatchPointPair match : matches)
-    {
-        cv::Scalar color(u(e), u(e), u(e));
-
-        pt1 = match.srcPt;
-        pt2 = cv::Point(match.dstPt.x + srcImg.cols, match.dstPt.y);
-
-        cv::circle(outputImg, pt1, 5, color, 2);
-        cv::circle(outputImg, pt2, 5, color, 2);
-        cv::line(outputImg, pt1, pt2, color, 2);
-    }
-}
-
-double BaseMatcher::computeCorrelationIdx(const cv::Mat& srcWindow, const cv::Mat& dstWindow)
-{
-    if (srcWindow.size != dstWindow.size)
-    {
-        std::cerr << "窗口大小不匹配！" << std::endl;
-        return 0;
-    }
-
-    // 总像元数量
-    double totalNum = srcWindow.rows * srcWindow.cols;
-
-    // 计算两张影像窗口中像素的平均值
-    double gAverSrc = 0.0, gAverDst = 0.0;
-    for (int i = 0; i < srcWindow.rows; i++)
-        for (int j = 0; j < srcWindow.cols; j++)
-        {
-            gAverSrc += srcWindow.at<unsigned char>(i, j);
-            gAverDst += dstWindow.at<unsigned char>(i, j);
+void basematcher::draw_result_view(cv::Mat& outputImage, const cv::Mat& leftImage, const cv::Mat& rightImage, std::vector<MatchPointPair>& matchPoints) {
+    outputImage.create(leftImage.rows, leftImage.cols + rightImage.cols, leftImage.type());
+//#pragma omp parallel for
+    for (int i = 0; i < leftImage.rows; i++) {
+        const cv::Vec3b* leftPtr = leftImage.ptr<cv::Vec3b>(i);
+        cv::Vec3b* outputPtr = outputImage.ptr<cv::Vec3b>(i);
+        for (int j = 0; j < leftImage.cols; j++) {
+            outputPtr[j] = leftPtr[j];
         }
-    gAverSrc /= totalNum;
-    gAverDst /= totalNum;
-
-    // 计算相关系数
-    double numerator = 0.0;
-    double denominatorSrc = 0.0;
-    double denominatorDst = 0.0;
-
-    for (int i = 0; i < srcWindow.rows; i++)
-        for (int j = 0; j < srcWindow.cols; j++)
+    }
+//#pragma omp parallel for
+    for (int i = 0; i < rightImage.rows; i++) {
+        const cv::Vec3b* rightPtr = rightImage.ptr<cv::Vec3b>(i);
+        cv::Vec3b* outputPtr = outputImage.ptr<cv::Vec3b>(i);
+        for (int j = leftImage.cols; j < leftImage.cols + rightImage.cols; j++)
         {
-            numerator += (srcWindow.at<unsigned char>(i, j) - gAverSrc) * (dstWindow.at<unsigned char>(i, j) - gAverDst);
-            denominatorSrc += pow((srcWindow.at<unsigned char>(i, j) - gAverSrc), 2);
-            denominatorDst += pow((dstWindow.at<unsigned char>(i, j) - gAverDst), 2);
+            outputPtr[j] = rightPtr[j];
         }
+    }
+//#pragma omp parallel for
+    for (auto& match_point : matchPoints)
+    {
+        int a = (rand() % 200);
+        int b = (rand() % 200 + 99);
+        int c = (rand() % 200) - 50;
+        if (a > 100 || a < 0) {
+            a = 255;
+        }
+        if (b > 255 || b < 0) {
+            b = 88;
+        }
+        if (c > 255 || c < 0) {
+            c = 188;
+        }
+        int radius = 5;
+        //左片
+        int left_col = int(match_point.leftPt.x);
+        int left_row = int(match_point.leftPt.y);
 
-    double denominator = sqrt(denominatorSrc * denominatorDst);
-    return abs(numerator / denominator);
-}
+        cv::circle(outputImage, cv::Point(left_col, left_row), radius, cv::Scalar(0, 255, 255), 1, 4, 0);
+        cv::line(outputImage, cv::Point(left_col - radius - 2, left_row), cv::Point(left_col + radius + 2, left_row), cv::Scalar(0, 255, 255), 1, 8, 0);
+        cv::line(outputImage, cv::Point(left_col, left_row - radius - 2), cv::Point(left_col, left_row + radius + 2), cv::Scalar(0, 255, 255), 1, 8, 0);
 
-bool BaseMatcher::isVaildPoint(const cv::Mat& srcImg, const cv::Point& pt)
-{
-    double r = windowSize / 2;
-    if (pt.x < r || pt.y < r || pt.x >= srcImg.cols - r || pt.y >= srcImg.rows - r)
-        return false;
-    return true;
+        //右片
+        int right_col = int(match_point.rightPt.x + leftImage.cols);
+        int right_row = int(match_point.rightPt.y);
+
+        cv::circle(outputImage, cv::Point(right_col, right_row), radius, cv::Scalar(0, 255, 255), 1, 4, 0);
+        cv::line(outputImage, cv::Point(right_col - radius - 2, right_row), cv::Point(right_col + radius + 2, right_row), cv::Scalar(0, 255, 255), 1, 8, 0);
+        cv::line(outputImage, cv::Point(right_col, right_row - radius - 2), cv::Point(right_col, right_row + radius + 2), cv::Scalar(0, 255, 255), 1, 8, 0);
+        //连接
+        cv::line(outputImage, cv::Point(left_col, left_row), cv::Point(right_col, right_row), cv::Scalar(a, b, c), 1, 8, 0);
+    }
+
+    cv::imshow("左右片影像同名点展示", outputImage);
+    cv::waitKey(0);
 }

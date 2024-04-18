@@ -1,13 +1,12 @@
 #pragma once
 
-//#include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
 #include "base_matcher.h"
 #include "match_point_pair.h"
-class LsqMatcher :
-    public BaseMatcher
+#include "correlation_matcher.h"
+
+namespace lsqmatch
 {
-public:
     /**
      * @brief 单点最小二乘匹配
      *
@@ -17,12 +16,6 @@ public:
      * @return true
      * @return false
      */
-    bool subPixelMatch(const cv::Mat& srcImg, const cv::Mat& dstImg, MatchPointPair& match);
-
-private:
-    double a0 = 0, a1 = 1, a2 = 0;
-    double b0 = 0, b1 = 0, b2 = 0;
-    double h0 = 0, h1 = 1;
-
+    bool subPixelMatch(MatchPointPair& match, const cv::Mat& leftImage, const cv::Mat& rightImage, const int& winSize, const float& threshold);
+    void match(std::vector<MatchPointPair>& matchPnts, std::vector<MatchPointPair>& corrMatchPnts, cv::Mat& leftImage, const cv::Mat& rightImage, const int& winSize = 5, const float& threshold = 0.95);
 };
-

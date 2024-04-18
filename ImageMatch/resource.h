@@ -7,6 +7,8 @@
 #define IDS_ABOUTBOX                    101
 #define IDD_IMAGEMATCH_DIALOG           102
 #define IDR_MAINFRAME                   128
+#define IDD_DIALOG_SAVE_FEATURE         130
+#define IDD_DIALOG_SELECT_FILENAME      132
 #define IDC_EDIT1                       1000
 #define IDC_EDIT2                       1001
 #define IDC_EDIT3                       1002
@@ -27,15 +29,31 @@
 #define IDC_BUTTON_COOR                 1017
 #define IDC_BUTTON_LSQ                  1018
 #define IDC_EDIT11                      1019
+#define IDC_BUTTON_SELECT_FILENAME      1019
 #define IDC_BUTTON_COOR_RESULT2         1020
+#define IDC_RADIO1                      1020
+#define IDC_BUTTON_SELECT_FILENAME2     1020
+#define IDC_EDIT12                      1021
+#define IDC_EDIT13                      1022
+#define IDC_BUTTON_LEFT_IMAGE2          1023
+#define IDC_BUTTON_RIGHT_IMAGE2         1024
+#define IDC_EDIT14                      1025
+#define IDC_RADIO2                      1026
+#define IDC_RADIO3                      1027
+#define IDC_EDIT15                      1028
+#define IDC_EDIT16                      1029
+#define IDC_STATIC1                     1031
+#define IDC_STATIC2                     1032
+#define IDC_STATIC3                     1033
+#define IDC_STATIC4                     1034
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        130
+#define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1019
+#define _APS_NEXT_CONTROL_VALUE         1035
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
