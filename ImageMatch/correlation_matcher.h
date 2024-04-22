@@ -1,5 +1,6 @@
 #pragma once
 #include<opencv2/opencv.hpp>
+#include<opencv2/core/simd_intrinsics.hpp>
 #include "match_point_pair.h"
 namespace correlationmatch {
     /**

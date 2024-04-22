@@ -151,10 +151,16 @@ void lsqmatch::match(std::vector<MatchPointPair>& matchPnts, std::vector<MatchPo
         cv::cvtColor(left_image_grey, left_image_grey, cv::COLOR_BGR2GRAY);
     if (right_image_grey.channels() != 1)
         cv::cvtColor(right_image_grey, right_image_grey, cv::COLOR_BGR2GRAY);
+    cv::GaussianBlur(left_image_grey, left_image_grey, cv::Size(winSize, winSize), 0, 0);
+    cv::GaussianBlur(right_image_grey, right_image_grey, cv::Size(winSize, winSize), 0, 0);
 
-    for (auto& match_point : corrMatchPnts) {
+#pragma omp parallel for
+    for (int i = 0; i < corrMatchPnts.size(); i++)
+    {
+        auto& match_point = corrMatchPnts[i];
         bool is_accepted = lsqmatch::subPixelMatch(match_point, leftImage, rightImage, winSize, threshold);
         if (is_accepted) {
+#pragma omp critical
             matchPnts.push_back(match_point);
         }
     }

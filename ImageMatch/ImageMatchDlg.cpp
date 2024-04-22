@@ -224,13 +224,19 @@ void CImageMatchDlg::OnClickedButtonRightImage()
 void CImageMatchDlg::OnClickedButtonCoor()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	std::ofstream ofs;
+	ofs.open("logfile.log");
+
 	left_image = cv::imread(left_image_path.GetBuffer(0), cv::IMREAD_COLOR);
 	right_image = cv::imread(right_image_path.GetBuffer(0), cv::IMREAD_COLOR);
 	if (left_image.data == nullptr || right_image.data == nullptr)
 	{
 		AfxMessageBox("图像打开失败！");
 	}
+	//left_image = left_image_raw(cv::Rect(10, 10, 400, 400));
+	//right_image = right_image_raw(cv::Rect(10, 10, 400, 400));
 
+	ofs << "开始进行特征提取..." << std::endl;
 	progress_bar = "开始进行特征提取...";
 	UpdateData(FALSE);
 
@@ -265,7 +271,7 @@ void CImageMatchDlg::OnClickedButtonCoor()
 	t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
 	progress_bar.Format("特征提取完成！用时:%lf，开始进行相关系数匹配...", t);
 	UpdateData(FALSE);
-
+	ofs << "特征提取完成！用时:" << t << "，开始进行相关系数匹配..." << std::endl;
 	t = (double)cv::getTickCount();
 	if (corr_window_size != 0 && corr_threshold != 0) {
 		if (corr_window_size % 2 == 0) {
@@ -280,6 +286,8 @@ void CImageMatchDlg::OnClickedButtonCoor()
 	t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
 	progress_bar.Format("相关系数匹配完成！用时:%lf", t);
 	UpdateData(FALSE);
+	ofs << "相关系数匹配完成完成！用时:" << t << std::endl;
+	ofs.close();
 
 	SaveFeatureDlg dlg;
 	CString jpg_file_name, txt_file_name;
@@ -298,6 +306,11 @@ void CImageMatchDlg::OnClickedButtonCoor()
 void CImageMatchDlg::OnClickedButtonLsq()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	std::ofstream ofs;
+	ofs.open("logfile.log", std::ios::app);
+	ofs << "开始进行最小二乘匹配..." << std::endl;
+	progress_bar.Format("开始进行最小二乘匹配...");
+	UpdateData(FALSE);
 	std::vector<MatchPointPair>lsq_match_points;
 	double t = (double)cv::getTickCount();
 	if (lsq_window_size != 0 && lsq_threshold != 0) {
@@ -313,6 +326,8 @@ void CImageMatchDlg::OnClickedButtonLsq()
 	t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
 	progress_bar.Format("最小二乘匹配完成！用时:%lf", t);
 	UpdateData(FALSE);
+	ofs << "最小二乘匹配完成完成！用时:" << t << std::endl;
+	ofs.close();
 
 	SaveFeatureDlg dlg;
 	CString jpg_file_name, txt_file_name;
@@ -335,6 +350,8 @@ void CImageMatchDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	if (nIDEvent == 1002) {
+		UpdateData(FALSE);
+		GetDlgItem(IDC_EDIT2)->ShowWindow(SW_SHOW);
 		if (feature_extraction_method == 0) {
 			GetDlgItem(IDC_STATIC4)->ShowWindow(SW_SHOW);
 			GetDlgItem(IDC_EDIT3)->ShowWindow(SW_SHOW);
