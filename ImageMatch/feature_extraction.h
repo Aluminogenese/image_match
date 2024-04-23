@@ -12,7 +12,7 @@ namespace featurextraction
      * @param corners 检测得到的角点
      * @param threshold Harris响应值的阈值
      */
-    void HarrisCornerDetect(const cv::Mat& image, std::vector<cv::Point>& corners, const int& threshold = 120);
+    void HarrisCornerDetect(const cv::Mat& image, std::vector<cv::Point>& corners, const int& threshold = 1000);
 
     /**
      * @brief Moravec角点检测
@@ -23,7 +23,7 @@ namespace featurextraction
      * @param restrainWinSize 抑制窗口大小，默认为21×21
      * @param threshold 阈值，默认为700
      */
-    void MoravecCornerDetect(const cv::Mat& image, std::vector<cv::Point>& corners, const int& interestWinSize = 9, const int& restrainWinSize = 21, const int& threshold = 700);
+    void MoravecCornerDetect(const cv::Mat& image, std::vector<cv::Point>& corners, const int& interestWinSize = 9, const int& restrainWinSize = 101, const int& threshold = 1000);
 
     /**
      * @brief SIFT角点检测
