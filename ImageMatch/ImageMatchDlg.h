@@ -58,11 +58,17 @@ public:
 	cv::Mat left_image, right_image;
 	std::vector<MatchPointPair>corr_match_points;
 
-	CString progress_bar;
+	CString m_status;
+	CStatusBar progress_bar;
+	CRect m_rect;
 
 	afx_msg void OnClickedButtonLeftImage();
 	afx_msg void OnClickedButtonRightImage();
 	afx_msg void OnClickedButtonCoor();
 	afx_msg void OnClickedButtonLsq();
-	afx_msg void OnTimer(UINT_PTR nIDEvent);
+//	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnClickedRadio1();
+	afx_msg void OnRadio2();
+	afx_msg void OnRadio3();
+//	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };
