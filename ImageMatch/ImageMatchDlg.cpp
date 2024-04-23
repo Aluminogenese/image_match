@@ -59,7 +59,6 @@ CImageMatchDlg::CImageMatchDlg(CWnd* pParent /*=nullptr*/)
 	, lsq_window_size(0)
 	, lsq_threshold(0)
 	, moravec_restrain_winSize(0)
-	, progress_bar(_T(""))
 	, feature_extraction_method(0)
 	, harris_threshold(0)
 	, corr_window_size(0)
@@ -78,7 +77,6 @@ void CImageMatchDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT8, lsq_window_size);
 	DDX_Text(pDX, IDC_EDIT9, lsq_threshold);
 	DDX_Text(pDX, IDC_EDIT14, moravec_restrain_winSize);
-	DDX_Text(pDX, IDC_EDIT2, progress_bar);
 	DDX_Radio(pDX, IDC_RADIO1, feature_extraction_method);
 	DDX_Text(pDX, IDC_EDIT3, harris_threshold);
 	DDX_Text(pDX, IDC_EDIT15, corr_window_size);
@@ -93,6 +91,10 @@ ON_BN_CLICKED(IDC_BUTTON_LEFT_IMAGE, &CImageMatchDlg::OnClickedButtonLeftImage)
 ON_BN_CLICKED(IDC_BUTTON_RIGHT_IMAGE, &CImageMatchDlg::OnClickedButtonRightImage)
 ON_BN_CLICKED(IDC_BUTTON_COOR, &CImageMatchDlg::OnClickedButtonCoor)
 ON_BN_CLICKED(IDC_BUTTON_LSQ, &CImageMatchDlg::OnClickedButtonLsq)
+ON_WM_TIMER()
+ON_BN_CLICKED(IDC_RADIO1, &CImageMatchDlg::OnClickedRadio1)
+ON_COMMAND(IDC_RADIO2, &CImageMatchDlg::OnRadio2)
+ON_COMMAND(IDC_RADIO3, &CImageMatchDlg::OnRadio3)
 ON_WM_TIMER()
 END_MESSAGE_MAP()
 
@@ -129,9 +131,21 @@ BOOL CImageMatchDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
-	feature_extraction_method = 0;
+	static UINT indicators[] =
+	{
+		IDS_STRING_MESSAGE,
+		IDS_STRING_PROGRESS
+	};
+	progress_bar.Create(this);
+	progress_bar.SetIndicators(indicators, 2);
+	GetClientRect(&m_rect);
 
-	SetTimer(1002, 30, NULL);
+	progress_bar.SetPaneInfo(0, IDS_STRING_MESSAGE, SBPS_POPOUT, m_rect.Width() / 9);
+	progress_bar.SetPaneInfo(1, IDS_STRING_PROGRESS, SBPS_STRETCH, 0);
+
+	progress_bar.GetStatusBarCtrl().SetBkColor(RGB(255, 255, 255));
+	RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST, AFX_IDW_CONTROLBAR_FIRST);
+
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -199,7 +213,6 @@ void CImageMatchDlg::OnClickedButtonLeftImage()
 	//将得到的文件路径名赋给对话框成员变量m_sRawIn
 	left_image_path = FileName;
 	UpdateData(FALSE);
-
 }
 
 
@@ -232,13 +245,14 @@ void CImageMatchDlg::OnClickedButtonCoor()
 	if (left_image.data == nullptr || right_image.data == nullptr)
 	{
 		AfxMessageBox("图像打开失败！");
+		return;
 	}
-	//left_image = left_image_raw(cv::Rect(10, 10, 400, 400));
-	//right_image = right_image_raw(cv::Rect(10, 10, 400, 400));
 
-	ofs << "开始进行特征提取..." << std::endl;
-	progress_bar = "开始进行特征提取...";
-	UpdateData(FALSE);
+	CString m_status = "开始进行特征提取...";
+	ofs << m_status << std::endl;
+	progress_bar.SetPaneText(1, m_status);
+
+	UpdateData(TRUE);
 
 	std::vector<cv::Point> corners;
 	double t = (double)cv::getTickCount();
@@ -269,9 +283,10 @@ void CImageMatchDlg::OnClickedButtonCoor()
 		featurextraction::SIFTCornerDetect(left_image, corners);
 	}
 	t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
-	progress_bar.Format("特征提取完成！用时:%lf，开始进行相关系数匹配...", t);
-	UpdateData(FALSE);
-	ofs << "特征提取完成！用时:" << t << "，开始进行相关系数匹配..." << std::endl;
+	m_status.Format("特征提取完成！左影像共提取特征点数：%d，用时：%lfs，开始进行相关系数匹配...", corners.size(), t);
+	ofs << m_status << std::endl;
+	progress_bar.SetPaneText(1, m_status);
+
 	t = (double)cv::getTickCount();
 	if (corr_window_size != 0 && corr_threshold != 0) {
 		if (corr_window_size % 2 == 0) {
@@ -279,15 +294,14 @@ void CImageMatchDlg::OnClickedButtonCoor()
 		}
 		correlationmatch::match(corr_match_points, left_image, right_image, corners, moravec_window_size, moravec_threshold);
 	}
-	else
-	{
+	else {
 		correlationmatch::match(corr_match_points, left_image, right_image, corners);
 	}
 	t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
-	progress_bar.Format("相关系数匹配完成！用时:%lf", t);
-	UpdateData(FALSE);
-	ofs << "相关系数匹配完成完成！用时:" << t << std::endl;
+	m_status.Format("相关系数匹配完成！匹配点个数：%d，用时：%lfs", corr_match_points.size(), t);
+	ofs << m_status << std::endl;
 	ofs.close();
+	progress_bar.SetPaneText(1, m_status);
 
 	SaveFeatureDlg dlg;
 	CString jpg_file_name, txt_file_name;
@@ -297,8 +311,12 @@ void CImageMatchDlg::OnClickedButtonCoor()
 		txt_file_name = dlg.m_txtFileName;
 		cv::Mat corr_match_resultImg;
 		basematcher::draw_result_view(corr_match_resultImg, left_image, right_image, corr_match_points);
-		cv::imwrite(jpg_file_name.GetBuffer(0), corr_match_resultImg);
-		basematcher::save_match_points(txt_file_name.GetBuffer(0), corr_match_points);
+		if (jpg_file_name.GetLength() != 0) {
+			cv::imwrite(jpg_file_name.GetBuffer(0), corr_match_resultImg);
+		}
+		if (txt_file_name.GetLength() != 0) {
+			basematcher::save_match_points(txt_file_name.GetBuffer(0), corr_match_points);
+		}
 	}
 }
 
@@ -308,9 +326,12 @@ void CImageMatchDlg::OnClickedButtonLsq()
 	// TODO: 在此添加控件通知处理程序代码
 	std::ofstream ofs;
 	ofs.open("logfile.log", std::ios::app);
-	ofs << "开始进行最小二乘匹配..." << std::endl;
-	progress_bar.Format("开始进行最小二乘匹配...");
-	UpdateData(FALSE);
+	m_status.Format("开始进行最小二乘匹配...");
+	ofs << m_status << std::endl;
+	progress_bar.SetPaneText(1, m_status);
+
+	UpdateData(TRUE);
+
 	std::vector<MatchPointPair>lsq_match_points;
 	double t = (double)cv::getTickCount();
 	if (lsq_window_size != 0 && lsq_threshold != 0) {
@@ -324,10 +345,10 @@ void CImageMatchDlg::OnClickedButtonLsq()
 		lsqmatch::match(lsq_match_points, corr_match_points, left_image, right_image);
 	}
 	t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
-	progress_bar.Format("最小二乘匹配完成！用时:%lf", t);
-	UpdateData(FALSE);
-	ofs << "最小二乘匹配完成完成！用时:" << t << std::endl;
+	m_status.Format("最小二乘匹配完成！匹配点个数：%d，用时：%lfs", lsq_match_points.size(), t);
+	ofs << m_status << std::endl;
 	ofs.close();
+	progress_bar.SetPaneText(1, m_status);
 
 	SaveFeatureDlg dlg;
 	CString jpg_file_name, txt_file_name;
@@ -337,54 +358,58 @@ void CImageMatchDlg::OnClickedButtonLsq()
 		txt_file_name = dlg.m_txtFileName;
 		cv::Mat lsq_match_resultImg;
 		basematcher::draw_result_view(lsq_match_resultImg, left_image, right_image, lsq_match_points);
-		cv::imwrite(jpg_file_name.GetBuffer(0), lsq_match_resultImg);
-		basematcher::save_match_points(txt_file_name.GetBuffer(0), lsq_match_points);
+		if (jpg_file_name.GetLength() != 0) {
+			cv::imwrite(jpg_file_name.GetBuffer(0), lsq_match_resultImg);
+		}
+		if (txt_file_name.GetLength() != 0) {
+			basematcher::save_match_points(txt_file_name.GetBuffer(0), lsq_match_points);
+		}
 	}
-
+	corr_match_points.clear();
+	corr_match_points.shrink_to_fit();
 }
 
 
-
-
-void CImageMatchDlg::OnTimer(UINT_PTR nIDEvent)
+void CImageMatchDlg::OnClickedRadio1()
 {
-	// TODO: 在此添加消息处理程序代码和/或调用默认值
-	if (nIDEvent == 1002) {
-		UpdateData(FALSE);
-		GetDlgItem(IDC_EDIT2)->ShowWindow(SW_SHOW);
-		if (feature_extraction_method == 0) {
-			GetDlgItem(IDC_STATIC4)->ShowWindow(SW_SHOW);
-			GetDlgItem(IDC_EDIT3)->ShowWindow(SW_SHOW);
+	// TODO: 在此添加控件通知处理程序代码
+	GetDlgItem(IDC_STATIC4)->ShowWindow(SW_SHOW);
+	GetDlgItem(IDC_EDIT3)->ShowWindow(SW_SHOW);
 
-			GetDlgItem(IDC_STATIC1)->ShowWindow(SW_HIDE);
-			GetDlgItem(IDC_STATIC2)->ShowWindow(SW_HIDE);
-			GetDlgItem(IDC_STATIC3)->ShowWindow(SW_HIDE);
-			GetDlgItem(IDC_EDIT5)->ShowWindow(SW_HIDE);
-			GetDlgItem(IDC_EDIT6)->ShowWindow(SW_HIDE);
-			GetDlgItem(IDC_EDIT14)->ShowWindow(SW_HIDE);
-		}
-		else if (feature_extraction_method == 1) {
-			GetDlgItem(IDC_STATIC4)->ShowWindow(SW_HIDE);
-			GetDlgItem(IDC_EDIT3)->ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_STATIC1)->ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_STATIC2)->ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_STATIC3)->ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_EDIT5)->ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_EDIT6)->ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_EDIT14)->ShowWindow(SW_HIDE);
+}
 
-			GetDlgItem(IDC_STATIC1)->ShowWindow(SW_SHOW);
-			GetDlgItem(IDC_STATIC2)->ShowWindow(SW_SHOW);
-			GetDlgItem(IDC_STATIC3)->ShowWindow(SW_SHOW);
-			GetDlgItem(IDC_EDIT5)->ShowWindow(SW_SHOW);
-			GetDlgItem(IDC_EDIT6)->ShowWindow(SW_SHOW);
-			GetDlgItem(IDC_EDIT14)->ShowWindow(SW_SHOW);
-		}
-		else if (feature_extraction_method == 2) {
-			GetDlgItem(IDC_STATIC4)->ShowWindow(SW_HIDE);
-			GetDlgItem(IDC_EDIT3)->ShowWindow(SW_HIDE);
 
-			GetDlgItem(IDC_STATIC1)->ShowWindow(SW_HIDE);
-			GetDlgItem(IDC_STATIC2)->ShowWindow(SW_HIDE);
-			GetDlgItem(IDC_STATIC3)->ShowWindow(SW_HIDE);
-			GetDlgItem(IDC_EDIT5)->ShowWindow(SW_HIDE);
-			GetDlgItem(IDC_EDIT6)->ShowWindow(SW_HIDE);
-			GetDlgItem(IDC_EDIT14)->ShowWindow(SW_HIDE);
-		}
-	}
-	CDialogEx::OnTimer(nIDEvent);
+void CImageMatchDlg::OnRadio2()
+{
+	// TODO: 在此添加命令处理程序代码
+	GetDlgItem(IDC_STATIC4)->ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_EDIT3)->ShowWindow(SW_HIDE);
+
+	GetDlgItem(IDC_STATIC1)->ShowWindow(SW_SHOW);
+	GetDlgItem(IDC_STATIC2)->ShowWindow(SW_SHOW);
+	GetDlgItem(IDC_STATIC3)->ShowWindow(SW_SHOW);
+	GetDlgItem(IDC_EDIT5)->ShowWindow(SW_SHOW);
+	GetDlgItem(IDC_EDIT6)->ShowWindow(SW_SHOW);
+	GetDlgItem(IDC_EDIT14)->ShowWindow(SW_SHOW);
+}
+
+
+void CImageMatchDlg::OnRadio3()
+{
+	// TODO: 在此添加命令处理程序代码
+	GetDlgItem(IDC_STATIC4)->ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_EDIT3)->ShowWindow(SW_HIDE);
+
+	GetDlgItem(IDC_STATIC1)->ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_STATIC2)->ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_STATIC3)->ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_EDIT5)->ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_EDIT6)->ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_EDIT14)->ShowWindow(SW_HIDE);
 }
