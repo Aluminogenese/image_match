@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "correlation_matcher.h"
 //x:col,y:row
+
+// SIMD优化
 void correlationmatch::determine_match_window(cv::Mat& matchWindow, const cv::Mat& image, const cv::Point& centralPnt, const int& matchWinSize) {
     matchWindow.create(matchWinSize, matchWinSize, CV_8UC1);
     int match_step = matchWinSize / 2;//边长的一半
@@ -37,28 +39,6 @@ void correlationmatch::normalize_window(cv::Mat& matchWindow) {
         }
     }
 }
-
-//void correlationmatch::determine_match_window(cv::Mat& matchWindow, const cv::Mat& image, const cv::Point& centralPnt, const int& matchWinSize) {
-//    matchWindow.create(matchWinSize, matchWinSize, CV_32FC1);
-//    int match_step = matchWinSize / 2;//边长的一半
-//    for (int i = 0; i < matchWinSize; i++) {
-//        const uchar* image_ptr = image.ptr<uchar>(centralPnt.y - match_step + i);
-//        float* match_window_ptr = matchWindow.ptr<float>(i);
-//        for (int j = 0; j < matchWinSize; j++) {
-//            match_window_ptr[j] = static_cast<float>(image_ptr[centralPnt.x - match_step + j]);
-//        }
-//    }
-//}
-
-//void correlationmatch::normalize_window(cv::Mat& matchWindow) {
-//    float grey_average = static_cast<float>(cv::mean(matchWindow)[0]);
-//    for (int i = 0; i < matchWindow.rows; i++) {
-//        float* match_window_ptr = matchWindow.ptr<float>(i);
-//        for (int j = 0; j < matchWindow.cols; j++) {
-//            match_window_ptr[j] -= grey_average;
-//        }
-//    }
-//}
 
 void correlationmatch::calculte_coefficient(double& cofficent, const cv::Mat& leftWindow, const cv::Mat& rightWindow) {
     //开始计算相关系数
@@ -101,6 +81,29 @@ void correlationmatch::calculte_coefficient(double& cofficent, const cv::Mat& le
     cofficent = cofficent1 / sqrt(cofficent2 * cofficent3);
 }
 
+//常规方法
+//void correlationmatch::determine_match_window(cv::Mat& matchWindow, const cv::Mat& image, const cv::Point& centralPnt, const int& matchWinSize) {
+//    matchWindow.create(matchWinSize, matchWinSize, CV_32FC1);
+//    int match_step = matchWinSize / 2;//边长的一半
+//    for (int i = 0; i < matchWinSize; i++) {
+//        const uchar* image_ptr = image.ptr<uchar>(centralPnt.y - match_step + i);
+//        float* match_window_ptr = matchWindow.ptr<float>(i);
+//        for (int j = 0; j < matchWinSize; j++) {
+//            match_window_ptr[j] = static_cast<float>(image_ptr[centralPnt.x - match_step + j]);
+//        }
+//    }
+//}
+
+//void correlationmatch::normalize_window(cv::Mat& matchWindow) {
+//    float grey_average = static_cast<float>(cv::mean(matchWindow)[0]);
+//    for (int i = 0; i < matchWindow.rows; i++) {
+//        float* match_window_ptr = matchWindow.ptr<float>(i);
+//        for (int j = 0; j < matchWindow.cols; j++) {
+//            match_window_ptr[j] -= grey_average;
+//        }
+//    }
+//}
+
 //void correlationmatch::calculte_coefficient(double& cofficent, const cv::Mat& leftWindow, const cv::Mat& rightWindow) {
 //    //开始计算相关系数
 //    float cofficent1 = 0;
@@ -130,8 +133,6 @@ void correlationmatch::match(std::vector<MatchPointPair>& match_points, const cv
     if (right_image_grey.channels() != 1) {
         cv::cvtColor(right_image_grey, right_image_grey, cv::COLOR_BGR2GRAY);
     }
-    //cv::GaussianBlur(left_image_grey, left_image_grey, cv::Size(matchWinSize, matchWinSize), 0, 0);
-    //cv::GaussianBlur(right_image_grey, right_image_grey, cv::Size(matchWinSize, matchWinSize), 0, 0);
 
     int match_step = matchWinSize / 2;//边长的一半
     int searchWinSize = 101;

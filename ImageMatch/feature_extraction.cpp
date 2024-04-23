@@ -34,6 +34,9 @@ void featurextraction::HarrisCornerDetect(const cv::Mat& image, std::vector<cv::
             }
         }
     }
+    cv::Mat outputImg;
+    DrawCorners(image, outputImg, corners);
+    cv::imwrite("harris_corners.jpg", outputImg);
 }
 
 void featurextraction::MoravecCornerDetect(const cv::Mat& image, std::vector<cv::Point>& corners, const int& interestWinSize, const int& restrainWinSize, const int& threshold){
@@ -97,17 +100,23 @@ void featurextraction::MoravecCornerDetect(const cv::Mat& image, std::vector<cv:
             }
         }
     }
+    cv::Mat outputImg;
+    DrawCorners(image, outputImg, corners);
+    cv::imwrite("moravec_corners.jpg", outputImg);
 }
-void featurextraction::SIFTCornerDetect(const cv::Mat& srcImg, std::vector<cv::Point>& corners)
+void featurextraction::SIFTCornerDetect(const cv::Mat& image, std::vector<cv::Point>& corners)
 {
     cv::Ptr<cv::FeatureDetector> detector = cv::SIFT::create();
     std::vector<cv::KeyPoint> keypoints;
-    detector->detect(srcImg, keypoints);
+    detector->detect(image, keypoints);
 
     for (const cv::KeyPoint& kpt : keypoints)
     {
         corners.push_back(cv::Point(kpt.pt));
     }
+    cv::Mat outputImg;
+    DrawCorners(image, outputImg, corners);
+    cv::imwrite("SIFT_corners.jpg", outputImg);
 }
 
 

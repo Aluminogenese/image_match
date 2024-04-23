@@ -1,12 +1,12 @@
 #include "pch.h"
 #include "lsq_matcher.h"
 
-bool lsqmatch::subPixelMatch(MatchPointPair& match, const cv::Mat& leftImage, const cv::Mat& rightImage, const int& winSize, const float& threshold)
+bool lsqmatch::subPixelMatch(MatchPointPair& matchPoint, const cv::Mat& leftImage, const cv::Mat& rightImage, const int& winSize)
 {
-    float left_x = match.leftPt.x;
-    float left_y = match.leftPt.y;
-    float right_x = match.rightPt.x;
-    float right_y = match.rightPt.y;
+    float left_x = matchPoint.leftPt.x;
+    float left_y = matchPoint.leftPt.y;
+    float right_x = matchPoint.rightPt.x;
+    float right_y = matchPoint.rightPt.y;
 
     int step = winSize / 2;
 
@@ -35,7 +35,6 @@ bool lsqmatch::subPixelMatch(MatchPointPair& match, const cv::Mat& leftImage, co
         int num = 0;
         double xNumerator = 0.0, yNumerator = 0.0, xDenominator = 0.0, yDenominator = 0.0;
 
-//#pragma omp parallel for collapse(2) reduction(+: xNumerator, yNumerator, xDenominator, yDenominator) shared(A, L, num)
         for (int i = left_y - step; i <= left_y + step; i++) {
             for (int j = left_x - step; j <= left_x + step; j++)
             {
@@ -127,23 +126,16 @@ bool lsqmatch::subPixelMatch(MatchPointPair& match, const cv::Mat& leftImage, co
             bestPt.y = xs;
             best_correlation_index = current_correlation_index;
         }
-
-        if (best_correlation_index > threshold)
-        {
-            match.rightPt.x = bestPt.x;
-            match.rightPt.y = bestPt.y;
-            match.dist = best_correlation_index;
-            return true;
-        }
     }
-
-    match.rightPt.x = bestPt.x;
-    match.rightPt.y = bestPt.y;
-    match.dist = best_correlation_index;
-    return false;
+    if (bestPt.x != 0 && bestPt.y != 0) {
+        matchPoint.rightPt.x = bestPt.x;
+        matchPoint.rightPt.y = bestPt.y;
+        matchPoint.dist = best_correlation_index;
+        return true;
+    }
 }
 
-void lsqmatch::match(std::vector<MatchPointPair>& matchPnts, std::vector<MatchPointPair>& corrMatchPnts, cv::Mat& leftImage, const cv::Mat& rightImage, const int& winSize, const float& threshold)
+void lsqmatch::match(std::vector<MatchPointPair>& matchPoints, std::vector<MatchPointPair>& corrMatchPnts, cv::Mat& leftImage, const cv::Mat& rightImage, const int& winSize)
 {
     cv::Mat left_image_grey = leftImage.clone();
     cv::Mat right_image_grey = rightImage.clone();
@@ -151,17 +143,15 @@ void lsqmatch::match(std::vector<MatchPointPair>& matchPnts, std::vector<MatchPo
         cv::cvtColor(left_image_grey, left_image_grey, cv::COLOR_BGR2GRAY);
     if (right_image_grey.channels() != 1)
         cv::cvtColor(right_image_grey, right_image_grey, cv::COLOR_BGR2GRAY);
-    cv::GaussianBlur(left_image_grey, left_image_grey, cv::Size(winSize, winSize), 0, 0);
-    cv::GaussianBlur(right_image_grey, right_image_grey, cv::Size(winSize, winSize), 0, 0);
 
 #pragma omp parallel for
     for (int i = 0; i < corrMatchPnts.size(); i++)
     {
         auto& match_point = corrMatchPnts[i];
-        bool is_accepted = lsqmatch::subPixelMatch(match_point, leftImage, rightImage, winSize, threshold);
+        bool is_accepted = lsqmatch::subPixelMatch(match_point, leftImage, rightImage, winSize);
         if (is_accepted) {
 #pragma omp critical
-            matchPnts.push_back(match_point);
+            matchPoints.push_back(match_point);
         }
     }
 }

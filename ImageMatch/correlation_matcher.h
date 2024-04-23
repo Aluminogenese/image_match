@@ -13,23 +13,32 @@ namespace correlationmatch {
      */
     void determine_match_window(cv::Mat& matchWindow, const cv::Mat& image, const cv::Point& centralPnt, const int& matchWinSize);
 
+    /**
+     * @brief 归一化匹配窗口
+     *
+     * @param matchWindow 需进行操作的匹配窗口
+     */
     void normalize_window(cv::Mat& matchWindow);
 
+    /**
+     * @brief 计算归一化相关系数NCC
+     *
+     * @param cofficent 计算得到的NCC
+     * @param leftWindow 左匹配窗口
+     * @param rightWindow 右匹配窗口
+     */
     void calculte_coefficient(double& cofficent, const cv::Mat& leftWindow, const cv::Mat& rightWindow);
 
-    void match(std::vector<MatchPointPair>& match_points, const cv::Mat& leftImage, const cv::Mat& rightImage, const std::vector<cv::Point>& leftCorners, const int& matchWinSize = 9, const float& threshold = 0.7);
-
-
     /**
-     * @brief 在参考图像和目标图像上同时提取特征点进行匹配
+     * @brief 左右影像相关系数匹配
      *
-     * @param srcImg 参考图像
-     * @param dstImg 目标图像
-     * @param srcPts 参考图像上的特征点
-     * @param dstPts 目标图像上的特征点
-     * @param matches 输出匹配上的特征点
+     * @param matchPoints 匹配得到的同名点
+     * @param leftImage 左影像
+     * @param rightImage 右影像
+     * @param leftCorners 左影像上提取的特征点
+     * @param matchWinSize 匹配窗口大小，默认为9
+     * @param threshold 相关系数匹配的阈值
      */
-
-
+    void match(std::vector<MatchPointPair>& matchPoints, const cv::Mat& leftImage, const cv::Mat& rightImage, const std::vector<cv::Point>& leftCorners, const int& matchWinSize = 9, const float& threshold = 0.7);
 };
 

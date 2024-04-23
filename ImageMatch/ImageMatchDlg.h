@@ -53,7 +53,7 @@ public:
 	float corr_threshold;
 
 	int lsq_window_size;
-	float lsq_threshold;
+//	float lsq_threshold;
 	// 在两张影像上分别提取角点
 	cv::Mat left_image, right_image;
 	std::vector<MatchPointPair>corr_match_points;

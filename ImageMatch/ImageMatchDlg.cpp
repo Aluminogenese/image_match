@@ -57,7 +57,6 @@ CImageMatchDlg::CImageMatchDlg(CWnd* pParent /*=nullptr*/)
 	, moravec_window_size(0)
 	, moravec_threshold(0)
 	, lsq_window_size(0)
-	, lsq_threshold(0)
 	, moravec_restrain_winSize(0)
 	, feature_extraction_method(0)
 	, harris_threshold(0)
@@ -75,7 +74,7 @@ void CImageMatchDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT5, moravec_window_size);
 	DDX_Text(pDX, IDC_EDIT6, moravec_threshold);
 	DDX_Text(pDX, IDC_EDIT8, lsq_window_size);
-	DDX_Text(pDX, IDC_EDIT9, lsq_threshold);
+	//  DDX_Text(pDX, IDC_EDIT9, lsq_threshold);
 	DDX_Text(pDX, IDC_EDIT14, moravec_restrain_winSize);
 	DDX_Radio(pDX, IDC_RADIO1, feature_extraction_method);
 	DDX_Text(pDX, IDC_EDIT3, harris_threshold);
@@ -334,11 +333,11 @@ void CImageMatchDlg::OnClickedButtonLsq()
 
 	std::vector<MatchPointPair>lsq_match_points;
 	double t = (double)cv::getTickCount();
-	if (lsq_window_size != 0 && lsq_threshold != 0) {
+	if (lsq_window_size != 0) {
 		if (lsq_window_size % 2 == 0) {
 			lsq_window_size += 1;
 		}
-		lsqmatch::match(lsq_match_points, corr_match_points, left_image, right_image, lsq_window_size, lsq_threshold);
+		lsqmatch::match(lsq_match_points, corr_match_points, left_image, right_image, lsq_window_size);
 	}
 	else
 	{
