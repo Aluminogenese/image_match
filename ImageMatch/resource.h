@@ -6,6 +6,8 @@
 #define IDD_ABOUTBOX                    100
 #define IDS_ABOUTBOX                    101
 #define IDD_IMAGEMATCH_DIALOG           102
+#define IDS_STRING_MESSAGE              102
+#define IDS_STRING_PROGRESS             103
 #define IDR_MAINFRAME                   128
 #define IDD_DIALOG_SAVE_FEATURE         130
 #define IDD_DIALOG_SELECT_FILENAME      132
@@ -33,9 +35,6 @@
 #define IDC_BUTTON_COOR_RESULT2         1020
 #define IDC_RADIO1                      1020
 #define IDC_BUTTON_SELECT_FILENAME2     1020
-#define IDC_EDIT12                      1021
-#define IDC_EDIT13                      1022
-#define IDC_BUTTON_LEFT_IMAGE2          1023
 #define IDC_BUTTON_RIGHT_IMAGE2         1024
 #define IDC_EDIT14                      1025
 #define IDC_RADIO2                      1026
@@ -53,7 +52,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1035
-#define _APS_NEXT_SYMED_VALUE           101
+#define _APS_NEXT_CONTROL_VALUE         1038
+#define _APS_NEXT_SYMED_VALUE           102
 #endif
 #endif
