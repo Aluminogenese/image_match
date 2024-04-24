@@ -78,7 +78,7 @@ void correlationmatch::calculte_coefficient(double& cofficent, const cv::Mat& le
     cofficent2 += cv::v_reduce_sum(cofficent2_vec);
     cofficent3 += cv::v_reduce_sum(cofficent3_vec);
 
-    cofficent = cofficent1 / sqrt(cofficent2 * cofficent3);
+    cofficent = abs(cofficent1 / sqrt(cofficent2 * cofficent3));
 }
 
 //常规方法
