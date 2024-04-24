@@ -47,13 +47,13 @@ public:
 
 	int moravec_window_size;
 	int moravec_restrain_winSize;
-	float moravec_threshold;
-	float harris_threshold;
+	int moravec_threshold;
+	int harris_threshold;
 	int corr_window_size;
 	float corr_threshold;
 
 	int lsq_window_size;
-//	float lsq_threshold;
+	float lsq_threshold;
 	// 在两张影像上分别提取角点
 	cv::Mat left_image, right_image;
 	std::vector<MatchPointPair>corr_match_points;

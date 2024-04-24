@@ -35,12 +35,12 @@
 #define IDC_BUTTON_COOR_RESULT2         1020
 #define IDC_RADIO1                      1020
 #define IDC_BUTTON_SELECT_FILENAME2     1020
-#define IDC_BUTTON_RIGHT_IMAGE2         1024
 #define IDC_EDIT14                      1025
 #define IDC_RADIO2                      1026
 #define IDC_RADIO3                      1027
 #define IDC_EDIT15                      1028
 #define IDC_EDIT16                      1029
+#define IDC_EDIT17                      1030
 #define IDC_STATIC1                     1031
 #define IDC_STATIC2                     1032
 #define IDC_STATIC3                     1033

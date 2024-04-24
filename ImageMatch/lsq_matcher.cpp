@@ -1,17 +1,17 @@
 #include "pch.h"
 #include "lsq_matcher.h"
 
-bool lsqmatch::subPixelMatch(MatchPointPair& matchPoint, const cv::Mat& leftImage, const cv::Mat& rightImage, const int& winSize)
+bool lsqmatch::subPixelMatch(MatchPointPair& matchPoint, const cv::Mat& leftImage, const cv::Mat& rightImage, const int& winSize, const float& threshold)
 {
-    float left_x = matchPoint.leftPt.x;
-    float left_y = matchPoint.leftPt.y;
-    float right_x = matchPoint.rightPt.x;
-    float right_y = matchPoint.rightPt.y;
+    double left_x = matchPoint.leftPt.y;
+    double left_y = matchPoint.leftPt.x;
+    double right_x = matchPoint.rightPt.y;
+    double right_y = matchPoint.rightPt.x;
 
     int step = winSize / 2;
 
     // 确定目标窗口
-    cv::Mat left_window = leftImage(cv::Rect(left_x - step, left_y - step, winSize, winSize));
+    cv::Mat left_window = leftImage(cv::Rect(left_y - step, left_x - step, winSize, winSize));
     cv::Mat right_window = cv::Mat::zeros(winSize, winSize, CV_8UC1);
     // 设定几何畸变初值
     double a0 = right_x - left_x;
@@ -24,7 +24,7 @@ bool lsqmatch::subPixelMatch(MatchPointPair& matchPoint, const cv::Mat& leftImag
     double h0 = 0;
     double h1 = 1;
 
-    float xs = 0.0, ys = 0.0;
+    double xs = 0.0, ys = 0.0;
     double current_correlation_index = 0.0, best_correlation_index = 0.0;
     cv::Point2f bestPt;
 
@@ -35,8 +35,8 @@ bool lsqmatch::subPixelMatch(MatchPointPair& matchPoint, const cv::Mat& leftImag
         int num = 0;
         double xNumerator = 0.0, yNumerator = 0.0, xDenominator = 0.0, yDenominator = 0.0;
 
-        for (int i = left_y - step; i <= left_y + step; i++) {
-            for (int j = left_x - step; j <= left_x + step; j++)
+        for (int i = left_x - step; i <= left_x + step; i++) {
+            for (int j = left_y - step; j <= left_y + step; j++)
             {
                 // 几何变形改正
                 double m = a0 + a1 * i + a2 * j;//y:row
@@ -59,7 +59,7 @@ bool lsqmatch::subPixelMatch(MatchPointPair& matchPoint, const cv::Mat& leftImag
 
                 // 辐射畸变改正
                 pixelValue = h0 + h1 * pixelValue;
-                right_window.at<uchar>(i - left_y + step, j - left_x + step) = pixelValue;
+                right_window.at<uchar>(i - left_x + step, j - left_y + step) = pixelValue;
 
                 // 构建误差方程
                 double gxDst = 0.5 * (rightImage.at<uchar>(I + 1, J) - rightImage.at<uchar>(I - 1, J));
@@ -126,16 +126,31 @@ bool lsqmatch::subPixelMatch(MatchPointPair& matchPoint, const cv::Mat& leftImag
             bestPt.y = xs;
             best_correlation_index = current_correlation_index;
         }
+        //if (best_correlation_index > threshold)
+        //{
+        //    matchPoint.rightPt.x = bestPt.x;
+        //    matchPoint.rightPt.y = bestPt.y;
+        //    matchPoint.dist = best_correlation_index;
+        //    return true;
+        //}
     }
-    if (bestPt.x != 0 && bestPt.y != 0) {
+    if (best_correlation_index > threshold)
+    {
         matchPoint.rightPt.x = bestPt.x;
         matchPoint.rightPt.y = bestPt.y;
         matchPoint.dist = best_correlation_index;
         return true;
     }
+
+    //if (bestPt.x != 0 && bestPt.y != 0) {
+    //    matchPoint.rightPt.x = bestPt.x;
+    //    matchPoint.rightPt.y = bestPt.y;
+    //    matchPoint.dist = best_correlation_index;
+    //    return true;
+    //}
 }
 
-void lsqmatch::match(std::vector<MatchPointPair>& matchPoints, std::vector<MatchPointPair>& corrMatchPnts, cv::Mat& leftImage, const cv::Mat& rightImage, const int& winSize)
+void lsqmatch::match(std::vector<MatchPointPair>& matchPoints, std::vector<MatchPointPair>& corrMatchPnts, cv::Mat& leftImage, const cv::Mat& rightImage, const int& winSize, const float& threshold)
 {
     cv::Mat left_image_grey = leftImage.clone();
     cv::Mat right_image_grey = rightImage.clone();
@@ -144,13 +159,13 @@ void lsqmatch::match(std::vector<MatchPointPair>& matchPoints, std::vector<Match
     if (right_image_grey.channels() != 1)
         cv::cvtColor(right_image_grey, right_image_grey, cv::COLOR_BGR2GRAY);
 
-#pragma omp parallel for
+//#pragma omp parallel for
     for (int i = 0; i < corrMatchPnts.size(); i++)
     {
         auto& match_point = corrMatchPnts[i];
-        bool is_accepted = lsqmatch::subPixelMatch(match_point, leftImage, rightImage, winSize);
+        bool is_accepted = lsqmatch::subPixelMatch(match_point, leftImage, rightImage, winSize, threshold);
         if (is_accepted) {
-#pragma omp critical
+//#pragma omp critical
             matchPoints.push_back(match_point);
         }
     }

@@ -62,6 +62,7 @@ CImageMatchDlg::CImageMatchDlg(CWnd* pParent /*=nullptr*/)
 	, harris_threshold(0)
 	, corr_window_size(0)
 	, corr_threshold(0)
+	, lsq_threshold(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -80,6 +81,7 @@ void CImageMatchDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT3, harris_threshold);
 	DDX_Text(pDX, IDC_EDIT15, corr_window_size);
 	DDX_Text(pDX, IDC_EDIT16, corr_threshold);
+	DDX_Text(pDX, IDC_EDIT17, lsq_threshold);
 }
 
 BEGIN_MESSAGE_MAP(CImageMatchDlg, CDialogEx)
@@ -333,11 +335,11 @@ void CImageMatchDlg::OnClickedButtonLsq()
 
 	std::vector<MatchPointPair>lsq_match_points;
 	double t = (double)cv::getTickCount();
-	if (lsq_window_size != 0) {
+	if (lsq_window_size != 0 && lsq_threshold != 0) {
 		if (lsq_window_size % 2 == 0) {
 			lsq_window_size += 1;
 		}
-		lsqmatch::match(lsq_match_points, corr_match_points, left_image, right_image, lsq_window_size);
+		lsqmatch::match(lsq_match_points, corr_match_points, left_image, right_image, lsq_window_size, lsq_threshold);
 	}
 	else
 	{

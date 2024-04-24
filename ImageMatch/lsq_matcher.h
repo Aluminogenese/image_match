@@ -14,10 +14,11 @@ namespace lsqmatch
      * @param leftImage 左影像
      * @param rightImage 右影像
      * @param winSize 匹配窗口大小，默认为5
+     * @param threshold 最小二乘阈值
      * @return true
      * @return false
      */
-    bool subPixelMatch(MatchPointPair& matchPoint, const cv::Mat& leftImage, const cv::Mat& rightImage, const int& winSize);
+    bool subPixelMatch(MatchPointPair& matchPoint, const cv::Mat& leftImage, const cv::Mat& rightImage, const int& winSize, const float &threshold);
 
     /**
      * @brief 左右影像最小二乘匹配
@@ -27,6 +28,7 @@ namespace lsqmatch
      * @param leftImage 左影像
      * @param rightImage 右影像
      * @param winSize 匹配窗口大小，默认为5
+     * @param threshold 最小二乘阈值，默认为0.9
      */
-    void match(std::vector<MatchPointPair>& matchPoints, std::vector<MatchPointPair>& corrMatchPnts, cv::Mat& leftImage, const cv::Mat& rightImage, const int& winSize = 5);
+    void match(std::vector<MatchPointPair>& matchPoints, std::vector<MatchPointPair>& corrMatchPnts, cv::Mat& leftImage, const cv::Mat& rightImage, const int& winSize = 5, const float& threshold = 0.9);
 };

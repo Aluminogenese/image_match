@@ -23,7 +23,7 @@ namespace featurextraction
      * @param restrainWinSize 抑制窗口大小，默认为21×21
      * @param threshold 阈值，默认为700
      */
-    void MoravecCornerDetect(const cv::Mat& image, std::vector<cv::Point>& corners, const int& interestWinSize = 9, const int& restrainWinSize = 101, const int& threshold = 1000);
+    void MoravecCornerDetect(const cv::Mat& image, std::vector<cv::Point>& corners, const int& interestWinSize = 9, const int& restrainWinSize = 101, const int& threshold = 0);
 
     /**
      * @brief SIFT角点检测
