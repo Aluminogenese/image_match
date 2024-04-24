@@ -128,23 +128,9 @@ bool lsqmatch::subPixelMatch(MatchPointPair& matchPoint, const cv::Mat& leftImag
             bestPt.y = xs;
             best_correlation_index = current_correlation_index;
         }
-        if (best_correlation_index > threshold)
-        {
-            matchPoint.rightPt.x = bestPt.x;
-            matchPoint.rightPt.y = bestPt.y;
-            matchPoint.dist = best_correlation_index;
-            return true;
-        }
     }
-    //if (best_correlation_index > threshold)
-    //{
-    //    matchPoint.rightPt.x = bestPt.x;
-    //    matchPoint.rightPt.y = bestPt.y;
-    //    matchPoint.dist = best_correlation_index;
-    //    return true;
-    //}
-
-    if (bestPt.x != 0 && bestPt.y != 0) {
+    if (best_correlation_index > threshold)
+    {
         matchPoint.rightPt.x = bestPt.x;
         matchPoint.rightPt.y = bestPt.y;
         matchPoint.dist = best_correlation_index;
