@@ -71,4 +71,5 @@ public:
 	afx_msg void OnRadio2();
 	afx_msg void OnRadio3();
 //	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	int searchWinsize;
 };
