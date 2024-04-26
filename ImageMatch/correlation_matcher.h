@@ -39,6 +39,6 @@ namespace correlationmatch {
      * @param matchWinSize 匹配窗口大小，默认为9
      * @param threshold 相关系数匹配的阈值
      */
-    void match(std::vector<MatchPointPair>& matchPoints, const cv::Mat& leftImage, const cv::Mat& rightImage, const std::vector<cv::Point>& leftCorners, const int& matchWinSize = 9, const float& threshold = 0.7);
+    void match(std::vector<MatchPointPair>& matchPoints, const cv::Mat& leftImage, const cv::Mat& rightImage, const std::vector<cv::Point>& leftCorners, const int& matchWinSize = 9, const int&searWinSize=101, const float& threshold = 0.7);
 };
 
