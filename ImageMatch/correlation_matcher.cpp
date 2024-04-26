@@ -123,7 +123,7 @@ void correlationmatch::calculte_coefficient(double& cofficent, const cv::Mat& le
 //    cofficent = cofficent1 / sqrt(cofficent2 * cofficent3);
 //}
 
-void correlationmatch::match(std::vector<MatchPointPair>& match_points, const cv::Mat& leftImage, const cv::Mat& rightImage, const std::vector<cv::Point>& leftCorners, const int& matchWinSize, const float& threshold)
+void correlationmatch::match(std::vector<MatchPointPair>& match_points, const cv::Mat& leftImage, const cv::Mat& rightImage, const std::vector<cv::Point>& leftCorners, const int& matchWinSize, const int&searchWinSize, const float& threshold)
 {
     cv::Mat left_image_grey = leftImage.clone();
     cv::Mat right_image_grey = rightImage.clone();
@@ -135,7 +135,7 @@ void correlationmatch::match(std::vector<MatchPointPair>& match_points, const cv
     }
 
     int match_step = matchWinSize / 2;//±ß³¤µÄÒ»°ë
-    int searchWinSize = 101;
+    //int searchWinSize = 101;
     int search_step = searchWinSize / 2;
 #pragma omp parallel for
     for (int k = 0; k < leftCorners.size(); k++)
