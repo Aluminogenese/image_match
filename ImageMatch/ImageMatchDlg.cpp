@@ -63,6 +63,7 @@ CImageMatchDlg::CImageMatchDlg(CWnd* pParent /*=nullptr*/)
 	, corr_window_size(0)
 	, corr_threshold(0)
 	, lsq_threshold(0)
+	, searchWinsize(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -82,6 +83,7 @@ void CImageMatchDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT15, corr_window_size);
 	DDX_Text(pDX, IDC_EDIT16, corr_threshold);
 	DDX_Text(pDX, IDC_EDIT17, lsq_threshold);
+	DDX_Text(pDX, IDC_EDIT18, searchWinsize);
 }
 
 BEGIN_MESSAGE_MAP(CImageMatchDlg, CDialogEx)
@@ -289,11 +291,11 @@ void CImageMatchDlg::OnClickedButtonCoor()
 	progress_bar.SetPaneText(1, m_status);
 
 	t = (double)cv::getTickCount();
-	if (corr_window_size != 0 && corr_threshold != 0) {
+	if (corr_window_size != 0 && searchWinsize != 0 && corr_threshold != 0) {
 		if (corr_window_size % 2 == 0) {
 			corr_window_size += 1;
 		}
-		correlationmatch::match(corr_match_points, left_image, right_image, corners, moravec_window_size, moravec_threshold);
+		correlationmatch::match(corr_match_points, left_image, right_image, corners, corr_window_size, searchWinsize, corr_threshold);
 	}
 	else {
 		correlationmatch::match(corr_match_points, left_image, right_image, corners);
