@@ -1,0 +1,13 @@
+开始进行特征提取...
+interestWinsize：9
+restrainWinsize：501
+threshold：100
+特征提取完成！左影像共提取特征点数：352，用时：2.388255s，开始进行相关系数匹配...
+matchWinsize：9
+searchWinsize：25
+threshold：0.7
+相关系数匹配完成！匹配点个数：344，用时：187.406152s
+开始进行最小二乘匹配...
+WinSize：5
+threshold：0.9
+最小二乘匹配完成！匹配点个数：239，用时：0.811376s

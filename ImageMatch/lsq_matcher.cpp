@@ -27,7 +27,7 @@ bool lsqmatch::subPixelMatch(MatchPointPair& matchPoint, const cv::Mat& leftImag
 
     double xs = 0.0, ys = 0.0;
     double current_correlation_index = 0.0, best_correlation_index = 0.0;
-    cv::Point2f bestPt;
+    cv::Point2f best_leftPt, best_rightPt;
 
     for (int iter = 0; iter < 50; iter++) // 设定最大迭代次数不超过50次
     {
@@ -124,15 +124,19 @@ bool lsqmatch::subPixelMatch(MatchPointPair& matchPoint, const cv::Mat& leftImag
 
         if (current_correlation_index > best_correlation_index)
         {
-            bestPt.x = ys;
-            bestPt.y = xs;
+            best_leftPt.x = yt;
+            best_leftPt.y = xt;
+            best_rightPt.x = ys;
+            best_rightPt.y = xs;
             best_correlation_index = current_correlation_index;
         }
     }
     if (best_correlation_index > threshold)
     {
-        matchPoint.rightPt.x = bestPt.x;
-        matchPoint.rightPt.y = bestPt.y;
+        matchPoint.leftPt.x = best_leftPt.x;
+        matchPoint.leftPt.y = best_leftPt.y;
+        matchPoint.rightPt.x = best_rightPt.x;
+        matchPoint.rightPt.y = best_rightPt.y;
         matchPoint.dist = best_correlation_index;
         return true;
     }

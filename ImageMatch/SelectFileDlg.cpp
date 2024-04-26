@@ -44,7 +44,7 @@ void SelectFileDlg::OnBnClickedButtonSelectFilename()
 {
 	// TODO: 在此添加控件通知处理程序代码
 		//文件类型说明字符串
-	static char BASED_CODE file[] = "所有格式(*.*)|*.*";
+	static char BASED_CODE file[] = "JPEG 文件交换格式(*.jpg)|*.jpg|Windows 位图(*.bmp)|*.bmp|便捷式网络图形(*.png)|*.png|图形交换格式(*.gif)|*.gif|TIFF 格式(*.tif)|*.tif||";
 	//文件对话框初始化
 	CFileDialog SelectFile(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, file, NULL);
 	//弹出文件打开对话框
@@ -69,7 +69,7 @@ void SelectFileDlg::OnBnClickedOk()
 void SelectFileDlg::OnBnClickedButtonSelectFilename2()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	static char BASED_CODE file[] = "所有格式(*.*)|*.*";
+	static char BASED_CODE file[] = "文本文件(*.txt)|*.txt";
 	//文件对话框初始化
 	CFileDialog SelectFile(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, file, NULL);
 	//弹出文件打开对话框
